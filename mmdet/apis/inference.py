@@ -8,11 +8,30 @@ import torch
 from mmcv.ops import RoIPool
 from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
+from torch.nn.functional import interpolate, pad
+from torchvision.transforms import Normalize
 
 from mmdet.core import get_classes
 from mmdet.datasets import replace_ImageToTensor
 from mmdet.datasets.pipelines import Compose
 from mmdet.models import build_detector
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def determine_padding(sample_img, desiredDivisibility=32):
+    numChannels, height, width = sample_img.shape
+
+    heightPadding = height % desiredDivisibility
+    widthPadding = width % desiredDivisibility
+
+    if heightPadding != 0:
+        heightPadding = desiredDivisibility - heightPadding
+
+    if widthPadding != 0:
+        widthPadding = desiredDivisibility - widthPadding
+
+    return heightPadding, widthPadding
 
 
 def init_detector(config, checkpoint=None, device='cuda:0', cfg_options=None):
@@ -103,57 +122,102 @@ def inference_detector(model, imgs):
         will be returned, otherwise return the detection results directly.
     """
 
-    if isinstance(imgs, (list, tuple)):
-        is_batch = True
-    else:
-        imgs = [imgs]
-        is_batch = False
+    normalize = Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
 
-    cfg = model.cfg
-    device = next(model.parameters()).device  # model device
+    # Extracting a sample frame (of 3 dimensions)
+    sampleFrame = imgs[0, ...]
 
-    if isinstance(imgs[0], np.ndarray):
-        cfg = cfg.copy()
-        # set loading pipeline type
-        cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
+    # Duplicating the shape to match the batch size (otherwise triton throws an error)
+    ori_shape = imgs.shape[1:]
 
-    cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
-    test_pipeline = Compose(cfg.data.test.pipeline)
+    # Computing the scale factor
+    _, scaleFactor = mmcv.imrescale(sampleFrame, (1333, 800), return_scale=True)
 
-    datas = []
-    for img in imgs:
-        # prepare data
-        if isinstance(img, np.ndarray):
-            # directly add img
-            data = dict(img=img)
-        else:
-            # add information into dict
-            data = dict(img_info=dict(filename=img), img_prefix=None)
-        # build the data pipeline
-        data = test_pipeline(data)
-        datas.append(data)
+    # Converting to tensor
+    imgs = torch.from_numpy(imgs).to(DEVICE)
 
-    data = collate(datas, samples_per_gpu=len(imgs))
-    # just get the actual data from DataContainer
-    data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
-    data['img'] = [img.data[0] for img in data['img']]
-    if next(model.parameters()).is_cuda:
-        # scatter to specified GPU
-        data = scatter(data, [device])[0]
-    else:
-        for m in model.modules():
-            assert not isinstance(
-                m, RoIPool
-            ), 'CPU inference with RoIPool is not supported currently.'
+    # Converting to RGB
+    imgs = imgs.permute(0, 3, 1, 2)
 
+    # Changing data type to float so the size can be interpolated
+    imgs = imgs.type(torch.float)
+
+    # Resizing the image
+    imgs = interpolate(imgs, scale_factor=scaleFactor, mode='bilinear')
+    scaleFactor = np.array([scaleFactor] * 4, dtype=np.float32)
+
+    img_shape = np.array(list(imgs.shape[1:]))[[1, 2, 0]]
+
+    # Determining the padding we want to add
+    heightPadding, widthPadding = determine_padding(imgs[0, ...])
+
+    # Adding the padding
+    imgs = pad(imgs, (0, widthPadding, 0, heightPadding), value=0)
+
+    imgs = normalize(imgs)
+    #
+    # print(scaleFactor.dtype)
+    # print(ori_shape)
+    # print(img_shape.dtype)
+
+    img_metas = [[{'scale_factor': scaleFactor, 'ori_shape': ori_shape, 'img_shape': img_shape}]*imgs.shape[0]]
+    data = {'img_metas': img_metas, 'img':[imgs]}
+
+    # exit(0)
+
+
+
+    # if isinstance(imgs, (list, tuple)):
+    #     is_batch = True
+    # else:
+    #     imgs = [imgs]
+    #     is_batch = False
+    #
+    # cfg = model.cfg
+    # device = next(model.parameters()).device  # model device
+    #
+    # if isinstance(imgs[0], np.ndarray):
+    #     cfg = cfg.copy()
+    #     # set loading pipeline type
+    #     cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
+    #
+    # cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
+    # test_pipeline = Compose(cfg.data.test.pipeline)
+    #
+    # datas = []
+    # for img in imgs:
+    #     # prepare data
+    #     if isinstance(img, np.ndarray):
+    #         # directly add img
+    #         data = dict(img=img)
+    #     else:
+    #         # add information into dict
+    #         data = dict(img_info=dict(filename=img), img_prefix=None)
+    #     # build the data pipeline
+    #     data = test_pipeline(data)
+    #     datas.append(data)
+    #
+    # data = collate(datas, samples_per_gpu=len(imgs))
+    # # just get the actual data from DataContainer
+    # data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
+    # data['img'] = [img.data[0] for img in data['img']]
+    # if next(model.parameters()).is_cuda:
+    #     # scatter to specified GPU
+    #     data = scatter(data, [device])[0]
+    # else:
+    #     for m in model.modules():
+    #         assert not isinstance(
+    #             m, RoIPool
+    #         ), 'CPU inference with RoIPool is not supported currently.'
+    #
+    # print(data['img'][0].dtype)
+
+    # exit(0)
     # forward the model
     with torch.no_grad():
         results = model(return_loss=False, rescale=True, **data)
 
-    if not is_batch:
-        return results[0]
-    else:
-        return results
+    return results
 
 
 async def async_inference_detector(model, imgs):
