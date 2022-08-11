@@ -305,9 +305,11 @@ class FCNMaskHead(BaseModule):
 
             im_mask[(inds, ) + spatial_inds] = masks_chunk
 
-        for i in range(N):
-            cls_segms[labels[i]].append(im_mask[i].detach().cpu().numpy())
-        return cls_segms
+        # for i in range(N):
+        #     cls_segms[labels[i]].append(im_mask[i].detach().cpu().numpy())
+        # return cls_segms
+
+        return im_mask
 
     def onnx_export(self, mask_pred, det_bboxes, det_labels, rcnn_test_cfg,
                     ori_shape, **kwargs):
