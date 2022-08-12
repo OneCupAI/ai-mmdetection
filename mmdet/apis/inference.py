@@ -122,24 +122,15 @@ def inference_detector(model, imgs):
         will be returned, otherwise return the detection results directly.
     """
 
-    print('***************here1')
-
     normalize = Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
-
-    print('***************here2')
 
     # Extracting a sample frame (of 3 dimensions)
     sampleFrame = imgs[0, ...]
 
-    print('***************here3')
-
     # Duplicating the shape to match the batch size (otherwise triton throws an error)
     ori_shape = imgs.shape[1:]
 
-    print('***************here4')
-
     # Computing the scale factor
-    print('***********in inference', sampleFrame.shape)
     _, scaleFactor = mmcv.imrescale(sampleFrame, (1333, 800), return_scale=True)
 
     # Converting to tensor
