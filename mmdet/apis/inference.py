@@ -155,64 +155,10 @@ def inference_detector(model, imgs):
     imgs = pad(imgs, (0, widthPadding, 0, heightPadding), value=0)
 
     imgs = normalize(imgs)
-    #
-    # print(scaleFactor.dtype)
-    # print(ori_shape)
-    # print(img_shape.dtype)
 
     img_metas = [[{'scale_factor': scaleFactor, 'ori_shape': ori_shape, 'img_shape': img_shape}]*imgs.shape[0]]
     data = {'img_metas': img_metas, 'img':[imgs]}
 
-    # exit(0)
-
-
-
-    # if isinstance(imgs, (list, tuple)):
-    #     is_batch = True
-    # else:
-    #     imgs = [imgs]
-    #     is_batch = False
-    #
-    # cfg = model.cfg
-    # device = next(model.parameters()).device  # model device
-    #
-    # if isinstance(imgs[0], np.ndarray):
-    #     cfg = cfg.copy()
-    #     # set loading pipeline type
-    #     cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
-    #
-    # cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
-    # test_pipeline = Compose(cfg.data.test.pipeline)
-    #
-    # datas = []
-    # for img in imgs:
-    #     # prepare data
-    #     if isinstance(img, np.ndarray):
-    #         # directly add img
-    #         data = dict(img=img)
-    #     else:
-    #         # add information into dict
-    #         data = dict(img_info=dict(filename=img), img_prefix=None)
-    #     # build the data pipeline
-    #     data = test_pipeline(data)
-    #     datas.append(data)
-    #
-    # data = collate(datas, samples_per_gpu=len(imgs))
-    # # just get the actual data from DataContainer
-    # data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
-    # data['img'] = [img.data[0] for img in data['img']]
-    # if next(model.parameters()).is_cuda:
-    #     # scatter to specified GPU
-    #     data = scatter(data, [device])[0]
-    # else:
-    #     for m in model.modules():
-    #         assert not isinstance(
-    #             m, RoIPool
-    #         ), 'CPU inference with RoIPool is not supported currently.'
-    #
-    # print(data['img'][0].dtype)
-
-    # exit(0)
     # forward the model
     with torch.no_grad():
         results = model(return_loss=False, rescale=True, **data)
