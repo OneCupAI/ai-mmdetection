@@ -243,8 +243,9 @@ class MaskTestMixin:
 
         num_imgs = len(det_bboxes)
         if all(det_bbox.shape[0] == 0 for det_bbox in det_bboxes):
-            segm_results = [[[] for _ in range(self.mask_head.num_classes)]
-                            for _ in range(num_imgs)]
+            # segm_results = [[[] for _ in range(self.mask_head.num_classes)]
+            #                 for _ in range(num_imgs)]
+            segm_results = [torch.empty((0, 28, 28), device=det_bboxes[0].device) for _ in range(num_imgs)]
         else:
             # if det_bboxes is rescaled to the original image size, we need to
             # rescale it back to the testing scale to obtain RoIs.
@@ -273,8 +274,9 @@ class MaskTestMixin:
             segm_results = []
             for i in range(num_imgs):
                 if det_bboxes[i].shape[0] == 0:
-                    segm_results.append(
-                        [[] for _ in range(self.mask_head.num_classes)])
+                    # segm_results.append(
+                    #     [[] for _ in range(self.mask_head.num_classes)])
+                    segm_results.append(torch.empty((0, 28, 28), device=det_bboxes[0].device))
                 else:
                     segm_result = mask_pred[range(det_labels[i].shape[0]), det_labels[i]][:, None].squeeze(1)
                     # segm_result = self.mask_head.get_seg_masks(
