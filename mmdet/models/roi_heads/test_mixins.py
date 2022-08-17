@@ -131,8 +131,10 @@ class BBoxTestMixin:
                     scale_factors[i],
                     rescale=rescale,
                     cfg=rcnn_test_cfg)
+
             det_bboxes.append(det_bbox)
             det_labels.append(det_label)
+
         return det_bboxes, det_labels
 
     def aug_test_bboxes(self, feats, img_metas, proposal_list, rcnn_test_cfg):

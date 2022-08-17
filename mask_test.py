@@ -27,25 +27,27 @@ class Mask2Former(object):
             score: float
             mask: ndarray of shape h*w
         """
+        # print(img.shape)
         dets, labels, masks = inference_detector(self.model, img)
 
-        batchScores = []
-        for imageResultIndex in range(0, len(dets)):
-            scores = dets[imageResultIndex][:, -1]
+        print(masks[0].shape)
+        #
+        # batchScores = []
+        # for imageResultIndex in range(0, len(dets)):
+        #     scores = dets[imageResultIndex][:, -1]
+        #
+        #     filter = scores.ge(0.7).nonzero().flatten()
+        #
+        #     batchScores.append(scores[filter])
+        #     dets[imageResultIndex] = torch.index_select(dets[imageResultIndex], 0, filter)
+        #     labels[imageResultIndex] = labels[imageResultIndex][filter]
+        #     masks[imageResultIndex] = torch.index_select(masks[imageResultIndex], 0, filter).int()
 
-            filter = scores.ge(0.7).nonzero().flatten()
-
-            batchScores.append(scores[filter])
-            dets[imageResultIndex] = torch.index_select(dets[imageResultIndex], 0, filter)
-            labels[imageResultIndex] = labels[imageResultIndex][filter]
-            masks[imageResultIndex] = torch.index_select(masks[imageResultIndex], 0, filter).int()
-
-            print(masks[imageResultIndex])
 
         return dets, labels, masks
 
 def main():
-    testIMG = '3dogs.jpg'
+    testIMG = 'cow.jpg'
 
     img = cv2.imread(testIMG)
     segModel = Mask2Former()
@@ -55,6 +57,8 @@ def main():
     dets, labels, masks = segModel(img)
 
     # dets, labels, masks = segModel([img])
+
+    exit(0)
 
     # ******************** Visualizing Results ********************
     img = cv2.imread(testIMG, cv2.IMREAD_COLOR)

@@ -363,6 +363,8 @@ class BBoxHead(BaseModule):
                 bboxes[:, [0, 2]].clamp_(min=0, max=img_shape[1])
                 bboxes[:, [1, 3]].clamp_(min=0, max=img_shape[0])
 
+
+
         if rescale and bboxes.size(0) > 0:
             scale_factor = bboxes.new_tensor(scale_factor)
             bboxes = (bboxes.view(bboxes.size(0), -1, 4) / scale_factor).view(
@@ -374,6 +376,7 @@ class BBoxHead(BaseModule):
             det_bboxes, det_labels = multiclass_nms(bboxes, scores,
                                                     cfg.score_thr, cfg.nms,
                                                     cfg.max_per_img)
+
 
             return det_bboxes, det_labels
 
