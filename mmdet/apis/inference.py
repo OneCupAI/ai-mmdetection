@@ -154,12 +154,9 @@ def inference_detector(model, imgs):
     # # Adding the padding
     # imgs = pad(imgs, (0, widthPadding, 0, heightPadding), value=0)
 
-    print('******', imgs.shape)
-
     imgs = normalize(imgs)
 
     img_metas = [[{'img_shape': img_shape}] * imgs.shape[0]]
-    print(img_metas)
     # img_metas = [[{'scale_factor': scaleFactor, 'ori_shape': ori_shape, 'img_shape': img_shape}] * imgs.shape[0]]
     data = {'img_metas': img_metas, 'img': [imgs]}
 
