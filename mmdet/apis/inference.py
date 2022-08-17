@@ -124,39 +124,42 @@ def inference_detector(model, imgs):
 
     normalize = Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
 
-    # Extracting a sample frame (of 3 dimensions)
-    sampleFrame = imgs[0, ...]
-
-    # Duplicating the shape to match the batch size (otherwise triton throws an error)
-    ori_shape = imgs.shape[1:]
-
-    # Computing the scale factor
-    _, scaleFactor = mmcv.imrescale(sampleFrame, (1333, 800), return_scale=True)
+    # # Extracting a sample frame (of 3 dimensions)
+    # sampleFrame = imgs[0, ...]
+    #
+    # # Duplicating the shape to match the batch size (otherwise triton throws an error)
+    # ori_shape = imgs.shape[1:]
+    #
+    # # Computing the scale factor
+    # _, scaleFactor = mmcv.imrescale(sampleFrame, (1333, 800), return_scale=True)
 
     # Converting to tensor
-    imgs = torch.from_numpy(imgs).to(DEVICE)
+    imgs = torch.from_numpy(imgs).to(DEVICE).float()
 
     # Converting to RGB
     imgs = imgs.permute(0, 3, 1, 2)
 
-    # Changing data type to float so the size can be interpolated
-    imgs = imgs.type(torch.float)
-
-    # Resizing the image
-    imgs = interpolate(imgs, scale_factor=scaleFactor, mode='bilinear')
-    scaleFactor = np.array([scaleFactor] * 4, dtype=np.float32)
-
+    # # Changing data type to float so the size can be interpolated
+    # imgs = imgs.type(torch.float)
+    #
+    # # Resizing the image
+    # imgs = interpolate(imgs, scale_factor=scaleFactor, mode='bilinear')
+    # scaleFactor = np.array([scaleFactor] * 4, dtype=np.float32)
+    #
     img_shape = np.array(list(imgs.shape[1:]))[[1, 2, 0]]
+    #
+    # # Determining the padding we want to add
+    # heightPadding, widthPadding = determine_padding(imgs[0, ...])
+    #
+    # # Adding the padding
+    # imgs = pad(imgs, (0, widthPadding, 0, heightPadding), value=0)
 
-    # Determining the padding we want to add
-    heightPadding, widthPadding = determine_padding(imgs[0, ...])
-
-    # Adding the padding
-    imgs = pad(imgs, (0, widthPadding, 0, heightPadding), value=0)
+    print('******', imgs.shape)
 
     imgs = normalize(imgs)
 
     img_metas = [[{'img_shape': img_shape}] * imgs.shape[0]]
+    print(img_metas)
     # img_metas = [[{'scale_factor': scaleFactor, 'ori_shape': ori_shape, 'img_shape': img_shape}] * imgs.shape[0]]
     data = {'img_metas': img_metas, 'img': [imgs]}
 
