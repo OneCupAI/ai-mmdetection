@@ -156,12 +156,13 @@ def inference_detector(model, imgs):
 
     imgs = normalize(imgs)
 
-    img_metas = [[{'scale_factor': scaleFactor, 'ori_shape': ori_shape, 'img_shape': img_shape}]*imgs.shape[0]]
-    data = {'img_metas': img_metas, 'img':[imgs]}
+    img_metas = [[{'img_shape': img_shape}] * imgs.shape[0]]
+    # img_metas = [[{'scale_factor': scaleFactor, 'ori_shape': ori_shape, 'img_shape': img_shape}] * imgs.shape[0]]
+    data = {'img_metas': img_metas, 'img': [imgs]}
 
     # forward the model
     with torch.no_grad():
-        results = model(return_loss=False, rescale=True, **data)
+        results = model(return_loss=False, rescale=False, **data)
 
     return results
 

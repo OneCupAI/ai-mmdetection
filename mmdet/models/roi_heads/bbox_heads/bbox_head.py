@@ -313,12 +313,19 @@ class BBoxHead(BaseModule):
         return losses
 
     @force_fp32(apply_to=('cls_score', 'bbox_pred'))
+    # def get_bboxes(self,
+    #                rois,
+    #                cls_score,
+    #                bbox_pred,
+    #                img_shape,
+    #                scale_factor,
+    #                rescale=False,
+    #                cfg=None):
     def get_bboxes(self,
                    rois,
                    cls_score,
                    bbox_pred,
                    img_shape,
-                   scale_factor,
                    rescale=False,
                    cfg=None):
         """Transform network output for a batch into bbox predictions.

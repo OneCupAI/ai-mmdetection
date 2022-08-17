@@ -30,7 +30,9 @@ class Mask2Former(object):
         # print(img.shape)
         dets, labels, masks = inference_detector(self.model, img)
 
+        print('_______________________________________-')
         print(masks[0].shape)
+        print(labels)
         #
         # batchScores = []
         # for imageResultIndex in range(0, len(dets)):

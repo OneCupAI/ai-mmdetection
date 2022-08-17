@@ -232,8 +232,7 @@ class FCNMaskHead(BaseModule):
             mask_pred = det_bboxes.new_tensor(mask_pred)
 
         device = mask_pred.device
-        cls_segms = [[] for _ in range(self.num_classes)
-                     ]  # BG is not included in num_classes
+        cls_segms = [[] for _ in range(self.num_classes)]  # BG is not included in num_classes
         bboxes = det_bboxes[:, :4]
         labels = det_labels
 
@@ -287,7 +286,10 @@ class FCNMaskHead(BaseModule):
             dtype=torch.bool if threshold >= 0 else torch.uint8)
 
         if not self.class_agnostic:
+            print('***********', mask_pred.shape)
             mask_pred = mask_pred[range(N), labels][:, None]
+
+            print('***********', mask_pred.shape)
 
         for inds in chunks:
             masks_chunk, spatial_inds = _do_paste_mask(
@@ -308,6 +310,7 @@ class FCNMaskHead(BaseModule):
         # for i in range(N):
         #     cls_segms[labels[i]].append(im_mask[i].detach().cpu().numpy())
         # return cls_segms
+        print(im_mask.shape)
 
         return im_mask
 

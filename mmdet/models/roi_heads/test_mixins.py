@@ -88,7 +88,7 @@ class BBoxTestMixin:
 
         bbox_results = self._bbox_forward(x, rois)
         img_shapes = tuple(meta['img_shape'] for meta in img_metas)
-        scale_factors = tuple(meta['scale_factor'] for meta in img_metas)
+        # scale_factors = tuple(meta['scale_factor'] for meta in img_metas)
 
         # split batch bbox prediction back to each image
         cls_score = bbox_results['cls_score']
@@ -128,7 +128,6 @@ class BBoxTestMixin:
                     cls_score[i],
                     bbox_pred[i],
                     img_shapes[i],
-                    scale_factors[i],
                     rescale=rescale,
                     cfg=rcnn_test_cfg)
 
@@ -231,16 +230,16 @@ class MaskTestMixin:
                          rescale=False):
         """Simple test for mask head without augmentation."""
         # image shapes of images in the batch
-        ori_shapes = tuple(meta['ori_shape'] for meta in img_metas)
-        scale_factors = tuple(meta['scale_factor'] for meta in img_metas)
+        # ori_shapes = tuple(meta['ori_shape'] for meta in img_metas)
+        # scale_factors = tuple(meta['scale_factor'] for meta in img_metas)
 
-        if isinstance(scale_factors[0], float):
-            warnings.warn(
-                'Scale factor in img_metas should be a '
-                'ndarray with shape (4,) '
-                'arrange as (factor_w, factor_h, factor_w, factor_h), '
-                'The scale_factor with float type has been deprecated. ')
-            scale_factors = np.array([scale_factors] * 4, dtype=np.float32)
+        # if isinstance(scale_factors[0], float):
+        #     warnings.warn(
+        #         'Scale factor in img_metas should be a '
+        #         'ndarray with shape (4,) '
+        #         'arrange as (factor_w, factor_h, factor_w, factor_h), '
+        #         'The scale_factor with float type has been deprecated. ')
+        #     scale_factors = np.array([scale_factors] * 4, dtype=np.float32)
 
         num_imgs = len(det_bboxes)
         if all(det_bbox.shape[0] == 0 for det_bbox in det_bboxes):
@@ -249,14 +248,18 @@ class MaskTestMixin:
         else:
             # if det_bboxes is rescaled to the original image size, we need to
             # rescale it back to the testing scale to obtain RoIs.
-            if rescale:
-                scale_factors = [
-                    torch.from_numpy(scale_factor).to(det_bboxes[0].device)
-                    for scale_factor in scale_factors
-                ]
+            # if rescale:
+                # scale_factors = [
+                #     torch.from_numpy(scale_factor).to(det_bboxes[0].device)
+                #     for scale_factor in scale_factors
+                # ]
+            # _bboxes = [
+            #     det_bboxes[i][:, :4] *
+            #     scale_factors[i] if rescale else det_bboxes[i][:, :4]
+            #     for i in range(len(det_bboxes))
+            # ]
             _bboxes = [
-                det_bboxes[i][:, :4] *
-                scale_factors[i] if rescale else det_bboxes[i][:, :4]
+                det_bboxes[i][:, :4]
                 for i in range(len(det_bboxes))
             ]
             mask_rois = bbox2roi(_bboxes)
@@ -273,11 +276,13 @@ class MaskTestMixin:
                     segm_results.append(
                         [[] for _ in range(self.mask_head.num_classes)])
                 else:
-                    segm_result = self.mask_head.get_seg_masks(
-                        mask_preds[i], _bboxes[i], det_labels[i],
-                        self.test_cfg, ori_shapes[i], scale_factors[i],
-                        rescale)
+                    segm_result = mask_pred[range(det_labels[i].shape[0]), det_labels[i]][:, None].squeeze(1)
+                    # segm_result = self.mask_head.get_seg_masks(
+                    #     mask_preds[i], _bboxes[i], det_labels[i],
+                    #     self.test_cfg, ori_shapes[i], scale_factors[i],
+                    #     rescale)
                     segm_results.append(segm_result)
+
         return segm_results
 
     def aug_test_mask(self, feats, img_metas, det_bboxes, det_labels):
