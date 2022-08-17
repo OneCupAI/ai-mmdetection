@@ -130,8 +130,7 @@ def inference_detector(model, imgs):
     # Duplicating the shape to match the batch size (otherwise triton throws an error)
     ori_shape = imgs.shape[1:]
 
-    # Computing the scale factor
-    _, scaleFactor = mmcv.imrescale(sampleFrame, (1333, 800), return_scale=True)
+    scaleFactor = min(1333/sampleFrame.shape[1], 800 / sampleFrame.shape[0])
 
     # Converting to tensor
     imgs = torch.from_numpy(imgs).to(DEVICE)

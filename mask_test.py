@@ -40,24 +40,60 @@ class Mask2Former(object):
             labels[imageResultIndex] = labels[imageResultIndex][filter]
             masks[imageResultIndex] = torch.index_select(masks[imageResultIndex], 0, filter).int()
 
-            print(masks[imageResultIndex])
-
         return dets, labels, masks
 
 def main():
-    testIMG = '3dogs.jpg'
+    # testIMG = 'cow.jpg'
+    #
+    # img = cv2.imread(testIMG)
 
-    img = cv2.imread(testIMG)
+    cap = cv2.VideoCapture('sit_10.mp4')
+
+    # Check if camera opened successfully
+    if cap.isOpened() == False:
+        print("Error opening video stream or file")
+
+    # Read until video is completed
+    while cap.isOpened():
+        # Capture frame-by-frame
+        ret, img = cap.read()
+        if ret == True:
+
+            break
+
+        # Break the loop
+        else:
+            break
+
+
     segModel = Mask2Former()
 
     img = np.stack([img])
 
     dets, labels, masks = segModel(img)
+    print(dets)
 
     # dets, labels, masks = segModel([img])
 
     # ******************** Visualizing Results ********************
-    img = cv2.imread(testIMG, cv2.IMREAD_COLOR)
+    # img = cv2.imread(testIMG, cv2.IMREAD_COLOR)
+    cap = cv2.VideoCapture('sit_10.mp4')
+
+    # Check if camera opened successfully
+    if cap.isOpened() == False:
+        print("Error opening video stream or file")
+
+    # Read until video is completed
+    while cap.isOpened():
+        # Capture frame-by-frame
+        ret, img = cap.read()
+        if ret == True:
+
+            break
+
+        # Break the loop
+        else:
+            break
     color = (255, 0, 0)
     thickness = 2
     for imageIndex in range(len(dets)):
