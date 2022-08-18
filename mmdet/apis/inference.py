@@ -18,6 +18,8 @@ from mmdet.models import build_detector
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+normalize = Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
+
 
 def determine_padding(sample_img, desiredDivisibility=32):
     numChannels, height, width = sample_img.shape
@@ -122,8 +124,6 @@ def inference_detector(model, imgs):
         will be returned, otherwise return the detection results directly.
     """
 
-    normalize = Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
-
     # Extracting a sample frame (of 3 dimensions)
     sampleFrame = imgs[0, ...]
 
@@ -145,6 +145,7 @@ def inference_detector(model, imgs):
     imgs = interpolate(imgs, scale_factor=scaleFactor, mode='bilinear')
     scaleFactor = np.array([scaleFactor] * 4, dtype=np.float32)
 
+    # Getting the image shape for post-processing
     img_shape = np.array(list(imgs.shape[1:]))[[1, 2, 0]]
 
     # Determining the padding we want to add
