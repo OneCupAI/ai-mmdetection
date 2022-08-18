@@ -29,51 +29,50 @@ class Mask2Former(object):
         """
         dets, labels, masks = inference_detector(self.model, img)
 
-        batchScores = []
-        for imageResultIndex in range(0, len(dets)):
-            scores = dets[imageResultIndex][:, -1]
-
-            filter = scores.ge(0.7).nonzero().flatten()
-
-            batchScores.append(scores[filter])
-            dets[imageResultIndex] = torch.index_select(dets[imageResultIndex], 0, filter)
-            labels[imageResultIndex] = labels[imageResultIndex][filter]
-            masks[imageResultIndex] = torch.index_select(masks[imageResultIndex], 0, filter).int()
-
         return dets, labels, masks
 
 def main():
-    # testIMG = 'cow.jpg'
-    #
-    # img = cv2.imread(testIMG)
-
-    cap = cv2.VideoCapture('sit_10.mp4')
-
-    # Check if camera opened successfully
-    if cap.isOpened() == False:
-        print("Error opening video stream or file")
-
-    # Read until video is completed
-    while cap.isOpened():
-        # Capture frame-by-frame
-        ret, img = cap.read()
-        if ret == True:
-
-            break
-
-        # Break the loop
-        else:
-            break
-
-
     segModel = Mask2Former()
+    testIMG = 'cow.jpg'
 
+    img = cv2.imread(testIMG)
+
+    # cap = cv2.VideoCapture('sit_10.mp4')
+    #
+    # # Check if camera opened successfully
+    # if cap.isOpened() == False:
+    #     print("Error opening video stream or file")
+    #
+    # # Read until video is completed
+    # while cap.isOpened():
+    #     # Capture frame-by-frame
+    #     ret, img = cap.read()
+    #     if ret == True:
+    #
+    #         break
+    #
+    #     # Break the loop
+    #     else:
+    #         break
+    #
+    #
+    #
+    # img = np.stack([img])
+    #
+    # img = torch.from_numpy(img)
+    #
+    # dets, labels, masks = segModel(img)
     img = np.stack([img])
 
-    dets, labels, masks = segModel(img)
-    print(dets)
+    print(img.shape)
 
-    # dets, labels, masks = segModel([img])
+    img = torch.from_numpy(img)
+
+    dets, labels, masks = segModel(img)
+    print(masks[0].shape)
+    exit(0)
+
+
 
     # ******************** Visualizing Results ********************
     # img = cv2.imread(testIMG, cv2.IMREAD_COLOR)

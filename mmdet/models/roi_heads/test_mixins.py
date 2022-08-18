@@ -242,7 +242,9 @@ class MaskTestMixin:
 
         num_imgs = len(det_bboxes)
         if all(det_bbox.shape[0] == 0 for det_bbox in det_bboxes):
-            segm_results = [[[] for _ in range(self.mask_head.num_classes)]
+            # segm_results = [[[] for _ in range(self.mask_head.num_classes)]
+            #                 for _ in range(num_imgs)]
+            segm_results = [[]
                             for _ in range(num_imgs)]
         else:
             # if det_bboxes is rescaled to the original image size, we need to
