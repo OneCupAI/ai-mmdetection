@@ -133,7 +133,7 @@ def inference_detector(model, imgs):
     scaleFactor = min(1333/sampleFrame.shape[1], 800 / sampleFrame.shape[0])
 
     # Converting to tensor
-    imgs = torch.from_numpy(imgs).to(DEVICE)
+    imgs = imgs.to(DEVICE)
 
     # Converting to RGB
     imgs = imgs.permute(0, 3, 1, 2)
